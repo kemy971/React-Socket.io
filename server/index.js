@@ -1,6 +1,6 @@
 var http = require('http');
 
-var port = process.env.PORT || 8080;
+var port = process.env.PORT || 8090;
 
 var app = http.createServer().listen(port, function () {
     console.log('Server listening on port ' + port);
@@ -12,18 +12,24 @@ var socketClients = [];
 var socketAdmins = [];
 
 io.on('connection', function (socket) {
-    
-    socket.on('new-user', onNewUser);
 
-    socket.on('new-admin', onNewAdmin);
+    socket.on('new-user', function() {
+        onNewUser(socket)
+    });
 
-    socket.on('disconnect', onDisconnect);
+    socket.on('new-admin', function() {
+        onNewAdmin(socket)
+    });
+
+    socket.on('disconnect', function() {
+        onDisconnect(socket)
+    });
 
 });
 
 function onNewUser(socket) {
     socketClients.push(socket);
-    console.log(socketClients.length+" clients connected !");
+    updateAdmin();
 }
 
 function onNewAdmin(socket) {
@@ -34,6 +40,12 @@ function onDisconnect(socket) {
     var index = socketClients.indexOf(socket);
     if (index != -1) {
         socketClients.splice(index, 1);
-        console.info('Client gone (id=' + socket.id + ').');
+        updateAdmin();
     }
+}
+
+function updateAdmin() {
+    socketAdmins.forEach(function(socket) {
+        io.to(socket.id).emit('update', {'nbClients':socketClients.length});
+    })
 }

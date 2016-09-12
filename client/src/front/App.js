@@ -1,10 +1,11 @@
 import React from 'react'
+import io from 'socket.io-client'
 
 export default class App extends React.Component {
     
     componentDidMount() {
-        var socket = io.connect("127.0.0.1:8080");
-        socket.emit('new-client');
+        var socket = io.connect("http://localhost:8090");
+        socket.emit('new-user');
     }
     
     render() {
