@@ -1,4 +1,5 @@
 var http = require('http');
+var _ = require('underscore');
 
 var port = process.env.PORT || 8090;
 
@@ -13,22 +14,33 @@ var socketAdmins = [];
 
 io.on('connection', function (socket) {
 
-    socket.on('new-user', function() {
-        onNewUser(socket)
+    socket.on('new-user', function(data) {
+        onNewUser(socket, data.username);
+    });
+
+    socket.on('user-online', function() {
+        var user = _.findWhere(socketClients, {id : socket.id});
+        user.status = 'online';
     });
 
     socket.on('new-admin', function() {
-        onNewAdmin(socket)
+        onNewAdmin(socket);
     });
 
     socket.on('disconnect', function() {
-        onDisconnect(socket)
+        onDisconnect(socket);
     });
 
 });
 
-function onNewUser(socket) {
-    socketClients.push(socket);
+function onNewUser(socket, username) {
+    socketClients.push({
+        id: socket.id,
+        socket,
+        username,
+        status: "online",
+    });
+
     updateAdmin();
 }
 
@@ -37,7 +49,7 @@ function onNewAdmin(socket) {
 }
 
 function onDisconnect(socket) {
-    var index = socketClients.indexOf(socket);
+    var index = _.findIndex(socketClients, { id : socket.id });
     if (index != -1) {
         socketClients.splice(index, 1);
         updateAdmin();
@@ -46,6 +58,6 @@ function onDisconnect(socket) {
 
 function updateAdmin() {
     socketAdmins.forEach(function(socket) {
-        io.to(socket.id).emit('update', {'nbClients':socketClients.length});
+        io.to(socket.id).emit('update', {'datas': socketClients});
     })
 }

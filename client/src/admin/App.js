@@ -6,23 +6,36 @@ export default class App extends React.Component {
     constructor(){
         super();
         this.state = {
-            nbConnectedUsers: 0
+            users: []
         }
     }
-    
+
     componentDidMount() {
         var socket = io.connect("http://localhost:8090");
         socket.emit('new-admin');
-        socket.on('update',(data) => {
-            this.updateData(data)
+        socket.on('update',(resp) => {
+            console.log(resp.datas);
+            this.updateData(resp.datas)
         })
     }
 
     updateData(data) {
-        this.setState({nbConnectedUsers:data.nbClients})
+        this.setState({users: data})
     }
-    
+
     render() {
-        return (<h1>Connected Users : {this.state.nbConnectedUsers}</h1>);
+        const { users } = this.state;
+        return (
+            <div>
+                <h1>Connected Users : {users.length}</h1>
+                <table>
+                { users.map(user => {
+                    <tr>
+                        <td>{user.username}</td>
+                    </tr>
+                }) }
+                </table>
+            </div>
+        );
     }
 }
