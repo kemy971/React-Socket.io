@@ -8,20 +8,19 @@ export default class App extends React.Component {
             username: '',
             isLogged: false,
         };
-
-        this.socket = io.connect("http://localhost:8090");
     }
-
+    
     login = () => {
         const username = this.input.value;
         this.setState({username}, () => {
+            this.socket = io.connect("http://localhost:8090");
             this.socket.emit('new-user', {username});
             window.addEventListener('focus', () => {
-                // this.socket.emit('user-online');
+                this.socket.emit('user-online');
             });
 
             window.addEventListener('blur', () => {
-                // this.socket.emit('user-busy');
+                this.socket.emit('user-busy');
             });
 
             this.setState({isLogged: true});
@@ -29,7 +28,8 @@ export default class App extends React.Component {
     }
 
     logout = () => {
-
+        this.socket.close();
+        this.setState({username: '', isLogged: false});
     }
 
     render() {

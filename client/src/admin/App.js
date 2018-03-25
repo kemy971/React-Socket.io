@@ -11,7 +11,7 @@ export default class App extends React.Component {
     }
 
     componentDidMount() {
-        var socket = io.connect("http://localhost:8090");
+        var socket = io.connect("http://127.0.0.1:8090");
         socket.emit('new-admin');
         socket.on('update',(resp) => {
             console.log(resp.datas);
@@ -29,11 +29,14 @@ export default class App extends React.Component {
             <div>
                 <h1>Connected Users : {users.length}</h1>
                 <table>
-                { users.map(user => {
-                    <tr>
+                    <tbody>
+                { users.map(user => (
+                    <tr key={user.id}>
                         <td>{user.username}</td>
+                        <td>{user.status}</td>
                     </tr>
-                }) }
+                )) }
+                </tbody>
                 </table>
             </div>
         );

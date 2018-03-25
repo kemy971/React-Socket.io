@@ -1,14 +1,8 @@
-var http = require('http');
+var server = require('http').createServer();
+var io = require('socket.io')(server);
 var _ = require('underscore');
 
 var port = process.env.PORT || 8090;
-
-var app = http.createServer().listen(port, function () {
-    console.log('Server listening on port ' + port);
-});
-
-var io = require('socket.io').listen(app);
-
 var socketClients = [];
 var socketAdmins = [];
 
@@ -19,8 +13,11 @@ io.on('connection', function (socket) {
     });
 
     socket.on('user-online', function() {
-        var user = _.findWhere(socketClients, {id : socket.id});
-        user.status = 'online';
+        updateUserStatus(socket, 'online');
+    });
+
+    socket.on('user-busy', function() {
+        updateUserStatus(socket, 'busy');
     });
 
     socket.on('new-admin', function() {
@@ -36,7 +33,6 @@ io.on('connection', function (socket) {
 function onNewUser(socket, username) {
     socketClients.push({
         id: socket.id,
-        socket,
         username,
         status: "online",
     });
@@ -44,8 +40,17 @@ function onNewUser(socket, username) {
     updateAdmin();
 }
 
+function updateUserStatus(socket, status) {
+    var user = _.findWhere(socketClients, {id : socket.id});
+    if (user) {
+        user.status = status;
+        updateAdmin();
+    }
+}
+
 function onNewAdmin(socket) {
     socketAdmins.push(socket);
+    io.to(socket.id).emit('update', {'datas': socketClients});
 }
 
 function onDisconnect(socket) {
@@ -61,3 +66,7 @@ function updateAdmin() {
         io.to(socket.id).emit('update', {'datas': socketClients});
     })
 }
+
+server.listen(port, function () {
+    console.log(`Server listening on port ${port}`);
+});
